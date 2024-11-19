@@ -3,11 +3,11 @@ name: Build Flet APK
 on:
   push:
     branches:
-      - main  # 監聽 main 分支的變更
+      - main
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest  # 使用 Ubuntu 作為執行環境
+    runs-on: ubuntu-latest
 
     steps:
     - name: 檢出程式碼
@@ -18,11 +18,23 @@ jobs:
       with:
         python-version: "3.10"
 
+    - name: 安裝 Android 開發工具
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openjdk-11-jdk wget unzip
+        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
+        unzip cmdline-tools.zip -d $HOME/android-sdk
+        export ANDROID_SDK_ROOT=$HOME/android-sdk
+        export PATH=$PATH:$HOME/android-sdk/cmdline-tools/bin:$HOME/android-sdk/platform-tools
+        yes | sdkmanager --licenses
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
     - name: 安裝 Flutter
       run: |
         git clone https://github.com/flutter/flutter.git -b stable
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
-        flutter --version
+        flutter precache --android --force
+        flutter doctor
 
     - name: 安裝必要套件
       run: |
@@ -38,4 +50,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: flet-apk
-        path: build/app/outputs/apk/release/  # 確保此路徑與實際輸出路徑一致
+        path: build/app/outputs/apk/release/  # 請根據實際路徑修改
