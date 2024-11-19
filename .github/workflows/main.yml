@@ -31,10 +31,6 @@ jobs:
         yes | sdkmanager --licenses
         sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
-    - name: 安裝 Linux 開發工具
-      run: |
-        sudo apt-get install -y ninja-build libgtk-3-dev
-
     - name: 安裝 Flutter
       run: |
         git clone https://github.com/flutter/flutter.git -b stable
@@ -46,7 +42,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pip-tools
-        pip-compile requirements.txt
+        mv requirements.txt requirements.in
+        pip-compile requirements.in
         pip install -r requirements.txt
 
     - name: 打包 APK
