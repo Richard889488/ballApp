@@ -14,8 +14,8 @@ jobs:
       - name: 檢出程式碼
         uses: actions/checkout@v3
 
-      # Step 2: 安裝 Python 環境
-      - name: 安裝 Python 環境
+      # Step 2: 設定 Python 環境
+      - name: 設定 Python 環境
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -26,18 +26,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential ninja-build python3-dev libopenblas-dev gfortran cmake openjdk-11-jdk
 
-      # Step 4: 安裝 Flutter 使用 Flutter Action
-      - name: 安裝 Flutter
+      # Step 4: 安裝 Flutter SDK 使用 subosito/flutter-action@v2
+      - name: 安裝 Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable' # 設定為 'stable' 頻道
-          flutter-version: 'stable' # 指定 Flutter 版本為 'stable'
+          channel: 'stable'          # 設定 Flutter 頻道為 'stable'
+          flutter-version: 'latest'  # 使用 'latest' 而非 'stable'
+          architecture: 'x64'        # 使用小寫 'x64'
+          cache: false                # 禁用緩存（可根據需要啟用）
+          pub-cache-path: 'default'   # 使用預設的 pub cache 路徑
+          dry-run: false              # 正常執行安裝
 
       # Step 5: 檢查 Flutter 安裝狀態
       - name: Flutter Doctor
         run: flutter doctor -v
 
-      # Step 6: 安裝 Cython、Flet 和依賴
+      # Step 6: 安裝 Cython、Flet 和其他依賴
       - name: 安裝 Cython、Flet 和依賴
         run: |
           pip install --upgrade pip
@@ -46,20 +50,28 @@ jobs:
           pip install flet
 
       # Step 7: 獲取 Flutter 依賴
-      - name: 安裝 Flutter 依賴
+      - name: 獲取 Flutter 依賴
         run: flutter pub get
-        working-directory: ./path/to/flutter/project # 替換為你的 Flutter 專案目錄
+        # 如果你的 Flutter 專案在子目錄，請取消註解並設置正確的路徑
+        # working-directory: ./path/to/flutter/project
 
       # Step 8: 打包 APK 並記錄日誌
       - name: 打包 APK
         run: |
           flet build apk --name "com.example.myapp" --version "1.0.0" > build_log.txt 2>&1
-        continue-on-error: true # 如果失敗，繼續後續步驟
+        continue-on-error: true  # 即使失敗也繼續後續步驟
 
       # Step 9: 上傳構建日誌
       - name: 上傳構建日誌
         uses: actions/upload-artifact@v3
         with:
           name: build-logs
-          path: |
-            build_log.txt
+          path: build_log.txt
+
+      # Step 10: （可選）上傳生成的 APK
+      - name: 上傳 APK
+        if: success() && steps.build-apk.outcome == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.apk
+          path: path/to/generated/apk  # 替換為實際的 APK 路徑
