@@ -1,4 +1,4 @@
-name: Build Flet APK with Debug
+name: Build and Debug Flet APK
 
 on:
   push:
@@ -34,19 +34,25 @@ jobs:
         echo "${{ github.workspace }}/flutter/bin/cache/dart-sdk/bin" >> $GITHUB_PATH
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
         flutter --version
+        flutter doctor -v
 
     # Step 5: 安裝 Flet 和依賴
     - name: 安裝 Flet 和依賴
       run: |
-        pip install -r requirements.txt
+        pip install -r requirements.txt || true  # 確保 requirements.txt 不影響流程
         pip install flet
 
-    # Step 6: 打包 APK
+    # Step 6: 獲取 Flutter 依賴
+    - name: 安裝 Flutter 依賴
+      run: flutter pub get
+
+    # Step 7: 打包 APK
     - name: 打包 APK
       run: |
-        flet build apk  
+        flet build apk --name "com.example.myapp" --version "1.0.0" > build_log.txt 2>&1
+      continue-on-error: true  # 如果失敗，繼續後續步驟
 
-    # Step 7: 上傳構建日誌
+    # Step 8: 上傳構建日誌
     - name: 上傳日誌
       uses: actions/upload-artifact@v3
       with:
