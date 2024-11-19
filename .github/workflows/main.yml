@@ -16,27 +16,30 @@ jobs:
     - name: 安裝 Python 環境
       uses: actions/setup-python@v4
       with:
-        python-version: "3.10"  # Python 3.10 是兼容的版本
+        python-version: "3.10"
 
-    - name: 安裝依賴
+    - name: 安裝必要依賴和升級工具
       run: |
-        python -m pip install --upgrade pip  # 升級 pip
-        pip install -r requirements.txt     # 安裝所有必要套件
+        python -m pip install --upgrade pip setuptools wheel
+
+    - name: 安裝依賴並捕獲日誌
+      run: |
+        pip install -r requirements.txt --verbose
 
     - name: 安裝 Flutter
       run: |
         git clone https://github.com/flutter/flutter.git -b stable
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
-        flutter precache --android --force  # 確保 Flutter SDK 下載完整
+        flutter precache --android --force
         flutter doctor
 
     - name: 打包 APK
       run: |
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
-        flet build apk                      # 使用 Flet 打包 APK
+        flet build apk
 
     - name: 上傳 APK
       uses: actions/upload-artifact@v3
       with:
         name: flet-apk
-        path: build/app/outputs/apk/release/  # 請根據實際輸出路徑修改
+        path: build/app/outputs/apk/release/
