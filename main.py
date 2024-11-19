@@ -8,6 +8,7 @@ import time
 import numpy as np
 import base64
 from flask import Flask, Response
+from flet import PermissionType, PermissionHandler
 
 # 建立 Flask 應用
 app = Flask(__name__)
@@ -47,7 +48,7 @@ def generate_frames():
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# 啟動 Flask 伺服器的執行線程
+# 啟動 Flask 伺服器的執行緒
 def run_flask(port):
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
@@ -78,38 +79,17 @@ def stop_camera():
 def main(page: ft.Page):
     page.title = "Ball Face Detection App"
 
-    # 創建 PermissionHandler 控件
-    permission_handler = ft.PermissionHandler()
+    # 檢查是否擁有藍牙和攝影機權限
+    def check_permissions():
+        if not PermissionHandler.request_permission(PermissionType.BLUETOOTH):
+            page.dialog = ft.AlertDialog(title=ft.Text("權限提醒"), content=ft.Text("請允許應用使用藍牙功能"))
+            page.dialog.open = True
+            page.update()
 
-    # 定義處理權限請求結果的函數
-    def on_permission_result(event):
-        if event.permission == ft.PermissionType.CAMERA:
-            if event.status == "granted":
-                page.snackbar = ft.Snackbar(ft.Text("攝影機權限已授予"))
-            else:
-                page.snackbar = ft.Snackbar(ft.Text("攝影機權限被拒絕"))
-        elif event.permission == ft.PermissionType.BLUETOOTH:
-            if event.status == "granted":
-                page.snackbar = ft.Snackbar(ft.Text("藍牙權限已授予"))
-            else:
-                page.snackbar = ft.Snackbar(ft.Text("藍牙權限被拒絕"))
-
-        page.snackbar.open = True
-        page.update()
-
-    # 將事件處理器連接到 PermissionHandler
-    permission_handler.on_permission_result = on_permission_result
-
-    # 創建按鈕來請求權限
-    request_camera_permission_button = ft.ElevatedButton(
-        "請求攝影機權限",
-        on_click=lambda _: permission_handler.request_permission(ft.PermissionType.CAMERA)
-    )
-
-    request_bluetooth_permission_button = ft.ElevatedButton(
-        "請求藍牙權限",
-        on_click=lambda _: permission_handler.request_permission(ft.PermissionType.BLUETOOTH)
-    )
+        if not PermissionHandler.request_permission(PermissionType.CAMERA):
+            page.dialog = ft.AlertDialog(title=ft.Text("權限提醒"), content=ft.Text("請允許應用使用攝影機"))
+            page.dialog.open = True
+            page.update()
 
     # 初始顯示用的空白影像
     init_image = np.zeros((480, 640, 3), dtype=np.uint8) + 128
@@ -122,7 +102,7 @@ def main(page: ft.Page):
     device_address_input = ft.TextField(label="輸入 HC-05 地址 (如 00:14:03:05:59:02)", width=400)
 
     # 連接按鈕
-def connect_device(e):
+    def connect_device(e):
         address = device_address_input.value.strip()
         if not address:
             page.dialog = ft.AlertDialog(title=ft.Text("錯誤"), content=ft.Text("請輸入 HC-05 的藍牙地址"))
@@ -148,7 +128,7 @@ def connect_device(e):
     message_input = ft.TextField(label="輸入要發送的訊息", width=400)
 
     # 發送按鈕
-def send_message(e=None, message=''):
+    def send_message(e=None, message=''):
         if not hasattr(send_message, "sock") or send_message.sock is None:
             page.dialog = ft.AlertDialog(title=ft.Text("錯誤"), content=ft.Text("未連接到任何設備"))
             page.dialog.open = True
@@ -177,14 +157,14 @@ def send_message(e=None, message=''):
     send_button = ft.ElevatedButton("發送訊息", on_click=send_message)
 
     # 開始攝影機按鈕
-def start_camera_button_click(e):
+    def start_camera_button_click(e):
         port = int(os.environ.get('PORT', 5000))
         start_camera(port)
         page.update()
         threading.Thread(target=update_image_view, daemon=True).start()
 
     # 停止攝影機按鈕
-def stop_camera_button_click(e):
+    def stop_camera_button_click(e):
         stop_camera()
         page.update()
 
@@ -192,7 +172,7 @@ def stop_camera_button_click(e):
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
 
     # 更新影像視圖
-def update_image_view():
+    def update_image_view():
         while is_running:
             try:
                 # 從攝影機獲取當前幀
@@ -208,10 +188,11 @@ def update_image_view():
             except Exception as e:
                 print(f"更新影像時發生錯誤: {e}")
 
+    # 檢查權限
+    check_permissions()
+
     # 主頁佈局
     page.add(
-        request_camera_permission_button,
-        request_bluetooth_permission_button,
         device_address_input,
         connect_button,
         message_input,
