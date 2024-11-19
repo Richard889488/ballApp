@@ -70,7 +70,6 @@ def start_camera():
         return
 
     is_running = True
-    threading.Thread(target=run_flask, daemon=True).start()
 
 # 停止攝影機
 def stop_camera():
@@ -97,7 +96,7 @@ def main(page: ft.Page):
 
     # 使用 ft.Text 作為提示信息，因為目前無法直接嵌入 HTML 來請求權限
     html_content = """
-    請確保您已授予本頁面攝像頭的使用權限。
+    請確保您已授予本頁面攝像頭和藍牙的使用權限。
     """
 
     web_view = ft.Text(value=html_content, width=640, height=100)
@@ -108,8 +107,8 @@ def main(page: ft.Page):
     # 開始攝影機按鈕
     def start_camera_button_click(e):
         start_camera()
-        page.update()
         threading.Thread(target=update_image_view, daemon=True).start()
+        page.update()
 
     # 停止攝影機按鈕
     def stop_camera_button_click(e):
@@ -159,4 +158,4 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
-    ft.app(target=main, view=ft.WEB_BROWSER, host='0.0.0.0')
+    ft.app(target=main, view=ft.WEB_BROWSER)
