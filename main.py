@@ -94,20 +94,12 @@ def connect_bluetooth(address):
 def main(page: ft.Page):
     page.title = "Ball Face Detection App"
 
-    # 使用 ft.Text 作為提示信息，因為目前無法直接嵌入 HTML 來請求權限
-    html_content = """
-    請確保您已授予本頁面攝像頭和藍牙的使用權限。
-    """
-
-    web_view = ft.Text(value=html_content, width=640, height=100)
-
-    # 顯示影像的區域
-    image_view = ft.Image(width=640, height=480)
+    # 使用 iframe 嵌入 Flask 提供的視頻流
+    video_frame = ft.IFrame(src="http://127.0.0.1:5000/video_feed", width=640, height=480)
 
     # 開始攝影機按鈕
     def start_camera_button_click(e):
         start_camera()
-        threading.Thread(target=update_image_view, daemon=True).start()
         page.update()
 
     # 停止攝影機按鈕
@@ -130,30 +122,12 @@ def main(page: ft.Page):
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
     connect_bluetooth_button = ft.ElevatedButton("連接藍牙", on_click=connect_bluetooth_button_click)
 
-    # 更新影像視圖
-    def update_image_view():
-        while is_running:
-            try:
-                # 從攝影機獲取當前幀
-                ret, frame = capture.read()
-                if not ret:
-                    continue
-
-                # 將影像轉換為 base64 並更新 ImageView
-                base64_image = to_base64(frame)
-                image_view.src_base64 = base64_image
-                page.update()
-                time.sleep(1 / 30)  # 每秒約 30 幀
-            except Exception as e:
-                print(f"更新影像時發生錯誤: {e}")
-
     # 主頁佈局
     page.add(
         start_camera_button,
         stop_camera_button,
         connect_bluetooth_button,
-        image_view,
-        web_view,  # 顯示提示信息
+        video_frame,  # 使用 iframe 顯示視頻流
     )
 
 if __name__ == "__main__":
