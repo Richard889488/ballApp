@@ -10,52 +10,54 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: 檢出程式碼
-    - name: 檢出程式碼
-      uses: actions/checkout@v3
+      # Step 1: 檢出程式碼
+      - name: 檢出程式碼
+        uses: actions/checkout@v3
 
-    # Step 2: 安裝 Python 環境
-    - name: 安裝 Python 環境
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
+      # Step 2: 安裝 Python 環境
+      - name: 安裝 Python 環境
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    # Step 3: 安裝必要的構建工具
-    - name: 安裝構建工具
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential ninja-build python3-dev libopenblas-dev gfortran cmake openjdk-11-jdk
+      # Step 3: 安裝必要的構建工具
+      - name: 安裝構建工具
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build python3-dev libopenblas-dev gfortran cmake openjdk-11-jdk
 
-    # Step 4: 安裝 Flutter
-    - name: 安裝 Flutter
-      run: |
-        git clone https://github.com/flutter/flutter.git -b stable
-        echo "${{ github.workspace }}/flutter/bin" >> $GITHUB_PATH
-        echo "${{ github.workspace }}/flutter/bin/cache/dart-sdk/bin" >> $GITHUB_PATH
-        export PATH="$PATH:${{ github.workspace }}/flutter/bin"
-        flutter --version
-        flutter doctor -v
+      # Step 4: 安裝 Flutter 使用 Flutter Action
+      - name: 安裝 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'  # 或指定具體版本，如 '3.13.6'
 
-    # Step 5: 安裝 Flet 和依賴
-    - name: 安裝 Flet 和依賴
-      run: |
-        pip install -r requirements.txt || true  # 確保 requirements.txt 不影響流程
-        pip install flet
+      # Step 5: 檢查 Flutter 安裝狀態
+      - name: Flutter Doctor
+        run: flutter doctor -v
 
-    # Step 6: 獲取 Flutter 依賴
-    - name: 安裝 Flutter 依賴
-      run: flutter pub get
+      # Step 6: 安裝 Cython、Flet 和依賴
+      - name: 安裝 Cython、Flet 和依賴
+        run: |
+          pip install --upgrade pip
+          pip install cython
+          pip install -r requirements.txt
+          pip install flet
 
-    # Step 7: 打包 APK
-    - name: 打包 APK
-      run: |
-        flet build apk --name "com.example.myapp" --version "1.0.0" > build_log.txt 2>&1
-      continue-on-error: true  # 如果失敗，繼續後續步驟
+      # Step 7: 獲取 Flutter 依賴
+      - name: 安裝 Flutter 依賴
+        run: flutter pub get
 
-    # Step 8: 上傳構建日誌
-    - name: 上傳日誌
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-logs
-        path: |
-          build_log.txt
+      # Step 8: 打包 APK
+      - name: 打包 APK
+        run: |
+          flet build apk > build_log.txt 2>&1
+        continue-on-error: true  # 如果失敗，繼續後續步驟
+
+      # Step 9: 上傳構建日誌
+      - name: 上傳日誌
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-logs
+          path: |
+            build_log.txt
