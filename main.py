@@ -160,16 +160,12 @@ def main(page: ft.Page):
 
     # 請求權限按鈕
     def request_permissions(e):
-        page.overlay.append(
-            ft.PermissionHandler(
-                permissions=[
-                    ft.PermissionType.CAMERA,
-                    ft.PermissionType.BLUETOOTH,
-                ],
-                on_result=lambda res: print(f"Permissions granted: {res.granted}")
-            )
-        )
-        page.update()
+        permissions = [
+            ft.PermissionType.CAMERA,
+            ft.PermissionType.BLUETOOTH,
+        ]
+        for permission in permissions:
+            page.request_permission(permission, lambda res, perm=permission: print(f"Permission {perm} granted: {res.granted}"))
 
     request_permissions_button = ft.ElevatedButton("請求攝影機與藍牙權限", on_click=request_permissions)
 
