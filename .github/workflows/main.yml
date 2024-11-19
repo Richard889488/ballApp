@@ -18,28 +18,18 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: 安裝 Android 開發工具
+    - name: 安裝必要的構建工具
       run: |
         sudo apt-get update
-        sudo apt-get install -y openjdk-11-jdk wget unzip
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
-        unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
-        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-        export ANDROID_SDK_ROOT=$HOME/android-sdk
-        export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-        yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+        sudo apt-get install -y build-essential python3-dev libopenblas-dev gfortran
 
-    - name: 安裝 Ninja 構建系統
+    - name: 升級 pip 和相關工具
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ninja-build
+        python -m pip install --upgrade pip setuptools wheel
 
-    - name: 安裝 GTK 3.0 開發庫
+    - name: 安裝依賴並捕獲日誌
       run: |
-        sudo apt-get update
-        sudo apt-get install -y libgtk-3-dev
+        pip install -r requirements.txt --verbose
 
     - name: 安裝 Flutter
       run: |
@@ -47,11 +37,6 @@ jobs:
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
         flutter precache --android --force
         flutter doctor
-
-    - name: 安裝必要套件
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install -r requirements.txt
 
     - name: 打包 APK
       run: |
