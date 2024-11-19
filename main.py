@@ -7,7 +7,7 @@ import platform
 import os
 import time
 import base64
-from flask import Flask, Response
+from flask import Flask, Response, render_template
 
 # 建立 Flask 應用
 app = Flask(__name__)
@@ -47,6 +47,11 @@ def generate_frames():
 @app.route('/video_feed')
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# Flask 主頁面路由
+@app.route('/')
+def home():
+    return render_template('open.html')
 
 # 啟動 Flask 伺服器的執行緒
 def run_flask(port):
@@ -155,4 +160,5 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
+    threading.Thread(target=run_flask, args=(port,), daemon=True).start()
     ft.app(target=main, view=ft.WEB_BROWSER, host='0.0.0.0', port=port)
