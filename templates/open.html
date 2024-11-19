@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>請求相機和藍牙權限</title>
+</head>
+<body>
+    <button id="cameraButton">請求相機權限</button>
+    <button id="bluetoothButton">請求藍牙權限</button>
+
+    <script>
+        // 請求相機權限
+        document.getElementById('cameraButton').addEventListener('click', function() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    console.log('相機已啟動');
+                    // 可以在這裡處理相機的視頻流，例如顯示在 <video> 元素中
+                })
+                .catch(function(err) {
+                    console.error('相機啟動失敗：', err);
+                });
+        });
+
+        // 請求藍牙權限
+        document.getElementById('bluetoothButton').addEventListener('click', async function() {
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true
+                });
+                console.log('已連接到藍牙設備：', device.name);
+            } catch (error) {
+                console.error('藍牙連接失敗：', error);
+            }
+        });
+    </script>
+</body>
+</html>
