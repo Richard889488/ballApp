@@ -158,48 +158,34 @@ def main(page: ft.Page):
     start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
 
-    # 請求權限按鈕
-    request_permissions_html = ft.HtmlElement(
-        """
-        <!DOCTYPE html>
-        <html lang="zh-Hant">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>請求相機和藍牙權限</title>
-        </head>
-        <body>
-            <button id="cameraButton">請求相機權限</button>
-            <button id="bluetoothButton">請求藍牙權限</button>
-
-            <script>
+    # 自動請求權限
+    def request_permissions():
+        page.eval_js(
+            """
+            (function() {
                 // 請求相機權限
-                document.getElementById('cameraButton').addEventListener('click', function() {
-                    navigator.mediaDevices.getUserMedia({ video: true })
-                        .then(function(stream) {
-                            console.log('相機已啟動');
-                        })
-                        .catch(function(err) {
-                            console.error('相機啟動失敗：', err);
-                        });
-                });
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        console.log('相機已啟動');
+                    })
+                    .catch(function(err) {
+                        console.error('相機啟動失敗：', err);
+                    });
 
                 // 請求藍牙權限
-                document.getElementById('bluetoothButton').addEventListener('click', async function() {
-                    try {
-                        const device = await navigator.bluetooth.requestDevice({
-                            acceptAllDevices: true
-                        });
+                navigator.bluetooth.requestDevice({ acceptAllDevices: true })
+                    .then(function(device) {
                         console.log('已連接到藍牙設備：', device.name);
-                    } catch (error) {
+                    })
+                    .catch(function(error) {
                         console.error('藍牙連接失敗：', error);
-                    }
-                });
-            </script>
-        </body>
-        </html>
-        """
-    )
+                    });
+            })();
+            """
+        )
+
+    # 請求權限
+    request_permissions()
 
     # 更新影像視圖
     def update_image_view():
@@ -220,7 +206,6 @@ def main(page: ft.Page):
 
     # 主頁佈局
     page.add(
-        request_permissions_html,
         device_address_input,
         connect_button,
         message_input,
