@@ -131,5 +131,6 @@ def main(page: ft.Page):
     )
 
 if __name__ == "__main__":
-    threading.Thread(target=run_flask, daemon=True).start()
     ft.app(target=main, view=ft.WEB_BROWSER)
+    threading.Thread(target=run_flask, daemon=True).start()
+    
