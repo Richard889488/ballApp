@@ -56,9 +56,9 @@ def start_camera(port):
     global capture, is_running
     if capture is None or not capture.isOpened():
         # 根據作業系統設定攝影機
-        num = 0 if platform.system() == 'Windows' else 2 if platform.system() == 'Linux' and 'ANDROID_ARGUMENT' in os.environ else 0
-        capture = cv2.VideoCapture(num)
-
+        #num = 0 if platform.system() == 'Windows' else 2 if platform.system() == 'Linux' and 'ANDROID_ARGUMENT' in os.environ else 0
+        capture = cv2.VideoCapture(0)
+    capture = cv2.VideoCapture(0)
     if not capture.isOpened():
         print("無法啟動攝影機")
         return
