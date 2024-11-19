@@ -48,11 +48,11 @@ def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # 啟動 Flask 伺服器的執行緒
-def run_flask():
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+def run_flask(port):
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
 # 開始攝影機
-def start_camera():
+def start_camera(port):
     global capture, is_running
     if capture is None or not capture.isOpened():
         # 根據作業系統設定攝影機
@@ -64,7 +64,7 @@ def start_camera():
         return
 
     is_running = True
-    threading.Thread(target=run_flask, daemon=True).start()
+    threading.Thread(target=run_flask, args=(port,), daemon=True).start()
 
 # 停止攝影機
 def stop_camera():
@@ -145,7 +145,8 @@ def main(page: ft.Page):
 
     # 開始攝影機按鈕
     def start_camera_button_click(e):
-        start_camera()
+        port = int(os.environ.get('PORT', 5000))
+        start_camera(port)
         page.update()
         threading.Thread(target=update_image_view, daemon=True).start()
 
@@ -185,4 +186,6 @@ def main(page: ft.Page):
         image_view,
     )
 
-ft.app(target=main)
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))
+    ft.app(target=main, host='0.0.0.0', port=port)
