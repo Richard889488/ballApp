@@ -158,14 +158,6 @@ def main(page: ft.Page):
     start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
 
-    # 請求權限按鈕
-    def request_permissions(e):
-        page.dialog = ft.AlertDialog(title=ft.Text("請求權限"), content=ft.Text("請允許攝影機與藍牙的使用權限"))
-        page.dialog.open = True
-        page.update()
-
-    request_permissions_button = ft.ElevatedButton("請求攝影機與藍牙權限", on_click=request_permissions)
-
     # 更新影像視圖
     def update_image_view():
         while is_running:
@@ -185,7 +177,6 @@ def main(page: ft.Page):
 
     # 主頁佈局
     page.add(
-        request_permissions_button,
         device_address_input,
         connect_button,
         message_input,
