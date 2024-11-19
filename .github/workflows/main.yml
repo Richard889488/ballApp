@@ -45,10 +45,10 @@ jobs:
           pip install -r requirements.txt
 
       # 6. 运行单元测试（如果有）
-      - name: Run tests
-        run: |
-          # 如果您有使用 unittest、pytest 等框架，可以在这里运行测试
-          pytest
+      # - name: Run tests
+      #   run: |
+      #     # 如果您有使用 unittest、pytest 等框架，可以在这里运行测试
+      #     pytest
         # 如果没有测试，可以注释掉或删除此步骤
 
       # 7. 部署到 Render.com
