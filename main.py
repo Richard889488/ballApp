@@ -42,31 +42,6 @@ def generate_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-def request_permissions():
-        page.eval_js(
-            """
-            (function() {
-                // 請求相機權限
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(function(stream) {
-                        console.log('相機已啟動');
-                    })
-                    .catch(function(err) {
-                        console.error('相機啟動失敗：', err);
-                    });
-
-                // 請求藍牙權限
-                navigator.bluetooth.requestDevice({ acceptAllDevices: true })
-                    .then(function(device) {
-                        console.log('已連接到藍牙設備：', device.name);
-                    })
-                    .catch(function(error) {
-                        console.error('藍牙連接失敗：', error);
-                    });
-            })();
-            """
-        )
-
 # 設定路由來提供影像流
 @app.route('/video_feed')
 def video_feed():
@@ -78,8 +53,6 @@ def run_flask(port):
 
 # 開始攝影機
 def start_camera(port):
-    request_permissions()
-
     global capture, is_running
     if capture is None or not capture.isOpened():
         # 根據作業系統設定攝影機
@@ -104,6 +77,31 @@ def stop_camera():
 # Flet 介面部分
 def main(page: ft.Page):
     page.title = "Ball Face Detection App"
+
+    # 請求相機和藍牙權限
+    page.eval_js(
+        """
+        (function() {
+            // 請求相機權限
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    console.log('相機已啟動');
+                })
+                .catch(function(err) {
+                    console.error('相機啟動失敗：', err);
+                });
+
+            // 請求藍牙權限
+            navigator.bluetooth.requestDevice({ acceptAllDevices: true })
+                .then(function(device) {
+                    console.log('已連接到藍牙設備：', device.name);
+                })
+                .catch(function(error) {
+                    console.error('藍牙連接失敗：', error);
+                });
+        })();
+        """
+    )
 
     # 初始顯示用的空白影像
     init_image = np.zeros((480, 640, 3), dtype=np.uint8) + 128
@@ -185,10 +183,6 @@ def main(page: ft.Page):
     start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
 
-    # 自動請求權
-
-    # 請求權限
-    
     # 更新影像視圖
     def update_image_view():
         while is_running:
