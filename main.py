@@ -16,8 +16,8 @@ is_running = False
 
 # 轉換影像為 base64 格式
 def to_base64(image):
-    base64_image = cv2.imencode('.png', image)[1]
-    base64_image = base64.b64encode(base64_image).decode('utf-8')
+    _, buffer = cv2.imencode('.png', image)
+    base64_image = base64.b64encode(buffer).decode('utf-8')
     return base64_image
 
 # 影像流生成器
@@ -35,7 +35,7 @@ def generate_frames():
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
         # 將影像編碼為 JPEG 格式
-        ret, buffer = cv2.imencode('.jpg', frame)
+        _, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
 
         # 使用 multipart/x-mixed-replace 來提供影像流
@@ -73,6 +73,27 @@ def stop_camera():
         is_running = False
         if capture:
             capture.release()
+
+# 處理来自 JavaScript 的事件
+def handle_event(e):
+    if e.control.id == "bluetooth_permission_result":
+        if e.data == "granted":
+            e.page.snackbar = ft.Snackbar(ft.Text("蓝牙权限已授予"))
+            e.page.snackbar.open = True
+            e.page.update()
+        else:
+            e.page.snackbar = ft.Snackbar(ft.Text("蓝牙权限被拒绝"))
+            e.page.snackbar.open = True
+            e.page.update()
+    elif e.control.id == "camera_permission_result":
+        if e.data == "granted":
+            e.page.snackbar = ft.Snackbar(ft.Text("摄像头权限已授予"))
+            e.page.snackbar.open = True
+            e.page.update()
+        else:
+            e.page.snackbar = ft.Snackbar(ft.Text("摄像头权限被拒绝"))
+            e.page.snackbar.open = True
+            e.page.update()
 
 # Flet 介面部分
 def main(page: ft.Page):
@@ -115,8 +136,8 @@ def main(page: ft.Page):
     message_input = ft.TextField(label="輸入要發送的訊息", width=400)
 
     # 發送按鈕
-    def send_message(e=None, message=''):
-        if not hasattr(send_message, "sock") or send_message.sock is None:
+    def send_message_click(e=None, message=''):
+        if not hasattr(send_message_click, "sock") or send_message_click.sock is None:
             page.dialog = ft.AlertDialog(title=ft.Text("錯誤"), content=ft.Text("未連接到任何設備"))
             page.dialog.open = True
             page.update()
@@ -132,7 +153,7 @@ def main(page: ft.Page):
             return
 
         try:
-            send_message.sock.send((message + '\n').encode())
+            send_message_click.sock.send((message + '\n').encode())
             page.dialog = ft.AlertDialog(title=ft.Text("成功"), content=ft.Text(f"已發送訊息：{message}"))
             page.dialog.open = True
             page.update()
@@ -141,7 +162,7 @@ def main(page: ft.Page):
             page.dialog.open = True
             page.update()
 
-    send_button = ft.ElevatedButton("發送訊息", on_click=send_message)
+    send_button = ft.ElevatedButton("發送訊息", on_click=send_message_click)
 
     # 開始攝影機按鈕
     def start_camera_button_click(e):
@@ -157,6 +178,43 @@ def main(page: ft.Page):
 
     start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
+
+    # 嵌入自定义 HTML 和 JavaScript 以请求摄像头和蓝牙权限
+    permission_html = """
+    <html>
+    <body>
+        <button onclick="requestBluetoothPermission()">请求蓝牙权限</button>
+        <button onclick="requestCameraPermission()">请求摄像头权限</button>
+        <script>
+            function requestBluetoothPermission() {
+                navigator.bluetooth.requestDevice({ acceptAllDevices: true })
+                .then(device => {
+                    window.flet.send_event('bluetooth_permission_result', 'granted');
+                })
+                .catch(error => {
+                    window.flet.send_event('bluetooth_permission_result', 'denied');
+                });
+            }
+
+            function requestCameraPermission() {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    window.flet.send_event('camera_permission_result', 'granted');
+                })
+                .catch(error => {
+                    window.flet.send_event('camera_permission_result', 'denied');
+                });
+            }
+        </script>
+    </body>
+    </html>
+    """
+
+    permission_component = ft.Html(
+        html=permission_html,
+        width=400,
+        height=100,
+    )
 
     # 更新影像視圖
     def update_image_view():
@@ -184,7 +242,11 @@ def main(page: ft.Page):
         start_camera_button,
         stop_camera_button,
         image_view,
+        permission_component,  # 添加权限请求组件
     )
+
+    # 註冊事件處理器
+    page.on_event = handle_event
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
