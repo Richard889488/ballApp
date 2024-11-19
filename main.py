@@ -51,14 +51,14 @@ def video_feed():
 # Flask 主頁面路由
 @app.route('/')
 def home():
-    return render_template('open.html')
+    return render_template('index.html')
 
 # 啟動 Flask 伺服器的執行緒
-def run_flask(port):
-    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+def run_flask():
+    app.run(host='0.0.0.0', debug=False, use_reloader=False)
 
 # 開始攝影機
-def start_camera(port):
+def start_camera():
     global capture, is_running
     if capture is None or not capture.isOpened():
         # 根據作業系統設定攝影機
@@ -70,7 +70,7 @@ def start_camera(port):
         return
 
     is_running = True
-    threading.Thread(target=run_flask, args=(port,), daemon=True).start()
+    threading.Thread(target=run_flask, daemon=True).start()
 
 # 停止攝影機
 def stop_camera():
@@ -107,8 +107,7 @@ def main(page: ft.Page):
 
     # 開始攝影機按鈕
     def start_camera_button_click(e):
-        port = int(os.environ.get('PORT', 5000))
-        start_camera(port)
+        start_camera()
         page.update()
         threading.Thread(target=update_image_view, daemon=True).start()
 
@@ -159,6 +158,5 @@ def main(page: ft.Page):
     )
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))
-    threading.Thread(target=run_flask, args=(port,), daemon=True).start()
-    ft.app(target=main, view=ft.WEB_BROWSER, host='0.0.0.0', port=port)
+    threading.Thread(target=run_flask, daemon=True).start()
+    ft.app(target=main, view=ft.WEB_BROWSER, host='0.0.0.0')
