@@ -1,11 +1,11 @@
 import flet as ft
 import cv2
+import numpy as np
 import socket
 import threading
 import platform
 import os
 import time
-import numpy as np
 import base64
 from flask import Flask, Response
 
@@ -56,9 +56,9 @@ def start_camera(port):
     global capture, is_running
     if capture is None or not capture.isOpened():
         # 根據作業系統設定攝影機
-        #num = 0 if platform.system() == 'Windows' else 2 if platform.system() == 'Linux' and 'ANDROID_ARGUMENT' in os.environ else 0
-        capture = cv2.VideoCapture(0)
-    capture = cv2.VideoCapture(0)
+        num = 0 if platform.system() == 'Windows' else 2 if platform.system() == 'Linux' and 'ANDROID_ARGUMENT' in os.environ else 0
+        capture = cv2.VideoCapture(num)
+
     if not capture.isOpened():
         print("無法啟動攝影機")
         return
@@ -78,70 +78,15 @@ def stop_camera():
 def main(page: ft.Page):
     page.title = "Ball Face Detection App"
 
-    # 初始顯示用的空白影像
-    init_image = np.zeros((480, 640, 3), dtype=np.uint8) + 128
-    init_base64_image = to_base64(init_image)
+    # 使用 ft.Text 作為提示信息，因為目前無法直接嵌入 HTML 來請求權限
+    html_content = """
+    請確保您已授予本頁面攝像頭和藍牙的使用權限。
+    """
+
+    web_view = ft.Text(value=html_content, width=640, height=100)
 
     # 顯示影像的區域
-    image_view = ft.Image(src_base64=init_base64_image, width=640, height=480)
-
-    # 手動輸入 HC-05 地址
-    device_address_input = ft.TextField(label="輸入 HC-05 地址 (如 00:14:03:05:59:02)", width=400)
-
-    # 連接按鈕
-    def connect_device(e):
-        address = device_address_input.value.strip()
-        if not address:
-            page.dialog = ft.AlertDialog(title=ft.Text("錯誤"), content=ft.Text("請輸入 HC-05 的藍牙地址"))
-            page.dialog.open = True
-            page.update()
-            return
-
-        try:
-            sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
-            sock.connect((address, 1))  # HC-05 默認埠為 1
-            send_message.sock = sock
-            page.dialog = ft.AlertDialog(title=ft.Text("成功"), content=ft.Text(f"已連接到 {address}"))
-            page.dialog.open = True
-            page.update()
-        except Exception as e:
-            page.dialog = ft.AlertDialog(title=ft.Text("連接失敗"), content=ft.Text(str(e)))
-            page.dialog.open = True
-            page.update()
-
-    connect_button = ft.ElevatedButton("連接 HC-05", on_click=connect_device)
-
-    # 發送訊息輸入框
-    message_input = ft.TextField(label="輸入要發送的訊息", width=400)
-
-    # 發送按鈕
-    def send_message(e=None, message=''):
-        if not hasattr(send_message, "sock") or send_message.sock is None:
-            page.dialog = ft.AlertDialog(title=ft.Text("錯誤"), content=ft.Text("未連接到任何設備"))
-            page.dialog.open = True
-            page.update()
-            return
-
-        if not message:
-            message = message_input.value.strip()
-
-        if not message:
-            page.dialog = ft.AlertDialog(title=ft.Text("錯誤"), content=ft.Text("請輸入訊息"))
-            page.dialog.open = True
-            page.update()
-            return
-
-        try:
-            send_message.sock.send((message + '\n').encode())
-            page.dialog = ft.AlertDialog(title=ft.Text("成功"), content=ft.Text(f"已發送訊息：{message}"))
-            page.dialog.open = True
-            page.update()
-        except Exception as e:
-            page.dialog = ft.AlertDialog(title=ft.Text("發送失敗"), content=ft.Text(str(e)))
-            page.dialog.open = True
-            page.update()
-
-    send_button = ft.ElevatedButton("發送訊息", on_click=send_message)
+    image_view = ft.Image(width=640, height=480)
 
     # 開始攝影機按鈕
     def start_camera_button_click(e):
@@ -157,14 +102,6 @@ def main(page: ft.Page):
 
     start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
-
-    # 請求權限按鈕
-    def request_permissions(e):
-        page.dialog = ft.AlertDialog(title=ft.Text("請求權限"), content=ft.Text("請允許攝影機與藍牙的使用權限"))
-        page.dialog.open = True
-        page.update()
-
-    request_permissions_button = ft.ElevatedButton("請求攝影機與藍牙權限", on_click=request_permissions)
 
     # 更新影像視圖
     def update_image_view():
@@ -185,16 +122,12 @@ def main(page: ft.Page):
 
     # 主頁佈局
     page.add(
-        request_permissions_button,
-        device_address_input,
-        connect_button,
-        message_input,
-        send_button,
         start_camera_button,
         stop_camera_button,
         image_view,
+        web_view,  # 顯示提示信息
     )
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    ft.app(target=main, host='0.0.0.0', port=port)
+    ft.app(target=main, view=ft.WEB_BROWSER, host='0.0.0.0', port=port)
