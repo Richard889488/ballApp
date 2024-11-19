@@ -26,10 +26,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential ninja-build python3-dev libopenblas-dev gfortran cmake openjdk-11-jdk
 
-    # Step 4: 升級 pip 和相關工具
-    - name: 升級 pip 和相關工具
+    # Step 4: 安裝 Flutter
+    - name: 安裝 Flutter
       run: |
-        python -m pip install --upgrade pip setuptools wheel
+        git clone https://github.com/flutter/flutter.git -b stable
+        echo "${{ github.workspace }}/flutter/bin" >> $GITHUB_PATH
+        echo "${{ github.workspace }}/flutter/bin/cache/dart-sdk/bin" >> $GITHUB_PATH
+        export PATH="$PATH:${{ github.workspace }}/flutter/bin"
+        flutter --version
 
     # Step 5: 安裝 Flet 和依賴
     - name: 安裝 Flet 和依賴
@@ -37,30 +41,16 @@ jobs:
         pip install -r requirements.txt
         pip install flet
 
-    # Step 6: 安裝 Flutter
-    - name: 安裝 Flutter
-      run: |
-        git clone https://github.com/flutter/flutter.git -b stable
-        echo "${{ github.workspace }}/flutter/bin" >> $GITHUB_PATH
-        flutter precache --android --force
-        flutter doctor > flutter_log.txt 2>&1
-
-    # Step 7: 打包 APK
+    # Step 6: 打包 APK
     - name: 打包 APK
       run: |
         flet build apk --debug --name "com.example.myapp" --version "1.0.0" > build_log.txt 2>&1
       continue-on-error: true
 
-    # Step 8: 上傳構建日誌
+    # Step 7: 上傳構建日誌
     - name: 上傳日誌
       uses: actions/upload-artifact@v3
       with:
         name: build-logs
         path: |
-          install_log.txt
-          flutter_log.txt
           build_log.txt
-
-    # Step 9: 手動調試模式
-    - name: 手動調試模式
-      uses: mxschmitt/action-tmate@v3
