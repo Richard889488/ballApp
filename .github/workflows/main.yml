@@ -1,6 +1,5 @@
-name: Flutter CI
+name: Flutter Build APK
 
-# 触发工作流的事件
 on:
   push:
     branches:
@@ -9,55 +8,39 @@ on:
     branches:
       - main
 
-# 定义工作任务
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
       # 1. 检出仓库代码
-      - name: 检出仓库
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       # 2. 设置 Flutter 环境
-      - name: 设置 Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.13.6'  # 您可以根据需要更改为最新版本
+          flutter-version: '3.13.6' # 根据需要更改 Flutter 版本
           architecture: 'x64'
-          cache: false
+          cache: true
 
-      # 3. 验证 Flutter 安装是否成功
-      - name: 运行 Flutter Doctor
+      # 3. 验证 Flutter 安装
+      - name: Flutter Doctor
         run: flutter doctor -v
 
-      # 4. 切换到 Flutter 项目目录（如果项目不在仓库根目录）
-      #    如果您的 Flutter 项目位于仓库的子目录（例如 "ballApp"），请取消注释以下步骤并进行相应修改
-      # - name: 切换到项目目录
-      #   run: cd ballApp
-
-      # 5. 获取 Flutter 依赖
-      - name: 获取 Flutter 依赖
+      # 4. 安装依赖项
+      - name: Install dependencies
         run: flutter pub get
-        # 如果需要指定工作目录，请添加 `working-directory` 参数，例如：
-        # working-directory: ./ballApp
 
-      # 6. 运行 Flutter 测试（可选）
-      - name: 运行 Flutter 测试
-        run: flutter test
-        # 如果需要指定工作目录，请添加 `working-directory` 参数，例如：
-        # working-directory: ./ballApp
+      # 5. 构建 APK
+      - name: Build APK
+        run: flutter build apk --release
 
-      # 7. 构建 Flutter 应用（根据需要添加）
-      # - name: 构建应用
-      #   run: flutter build apk --release
-      #   # 如果需要指定工作目录，请添加 `working-directory` 参数，例如：
-      #   # working-directory: ./ballApp
-
-      # 8. 上传构建产物（根据需要添加）
-      # - name: 上传构建产物
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: app-release.apk
-      #     path: build/app/outputs/flutter-apk/app-release.apk
+      # 6. 上传 APK 作为构建产物
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
