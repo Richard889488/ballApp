@@ -94,12 +94,13 @@ def connect_bluetooth(address):
 def main(page: ft.Page):
     page.title = "Ball Face Detection App"
 
-    # 使用 iframe 嵌入 Flask 提供的視頻流
-    video_frame = ft.IFrame(src="http://127.0.0.1:5000/video_feed", width=640, height=480)
+    # 使用 HTML 嵌入 Flask 提供的視頻流
+    video_frame = ft.Container(content=ft.HtmlElement("<iframe src='http://127.0.0.1:5000/video_feed' width='640' height='480' frameborder='0'></iframe>"), expand=True)
 
     # 開始攝影機按鈕
     def start_camera_button_click(e):
         start_camera()
+        threading.Thread(target=update_image_view, daemon=True).start()
         page.update()
 
     # 停止攝影機按鈕
@@ -127,10 +128,9 @@ def main(page: ft.Page):
         start_camera_button,
         stop_camera_button,
         connect_bluetooth_button,
-        video_frame,  # 使用 iframe 顯示視頻流
+        video_frame  # 使用 iframe 顯示視頻流
     )
 
 if __name__ == "__main__":
-    ft.app(target=main, view=ft.WEB_BROWSER)
     threading.Thread(target=run_flask, daemon=True).start()
-    
+    ft.app(target=main, view=ft.WEB_BROWSER)
