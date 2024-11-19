@@ -8,6 +8,7 @@ import os
 import time
 import base64
 from flask import Flask, Response
+from bluetooth import *
 
 # 建立 Flask 應用
 app = Flask(__name__)
@@ -74,6 +75,17 @@ def stop_camera():
         if capture:
             capture.release()
 
+# 藍牙連接
+def connect_bluetooth(address):
+    try:
+        sock = BluetoothSocket(RFCOMM)
+        sock.connect((address, 1))  # 1 is the port number for RFCOMM
+        print(f"成功連接到藍牙設備: {address}")
+        return sock
+    except Exception as e:
+        print(f"無法連接到藍牙設備: {e}")
+        return None
+
 # Flet 介面部分
 def main(page: ft.Page):
     page.title = "Ball Face Detection App"
@@ -87,6 +99,19 @@ def main(page: ft.Page):
 
     # 顯示影像的區域
     image_view = ft.Image(width=640, height=480)
+
+    # 藍牙連接按鈕
+    def connect_bluetooth_button_click(e):
+        address = "00:14:03:05:59:02"  # Example Bluetooth address, change it accordingly
+        sock = connect_bluetooth(address)
+        if sock:
+            page.snack_bar = ft.SnackBar(ft.Text("已成功連接到藍牙設備"))
+        else:
+            page.snack_bar = ft.SnackBar(ft.Text("藍牙連接失敗"))
+        page.snack_bar.open = True
+        page.update()
+
+    connect_bluetooth_button = ft.ElevatedButton("連接藍牙", on_click=connect_bluetooth_button_click)
 
     # 開始攝影機按鈕
     def start_camera_button_click(e):
@@ -122,6 +147,7 @@ def main(page: ft.Page):
 
     # 主頁佈局
     page.add(
+        connect_bluetooth_button,
         start_camera_button,
         stop_camera_button,
         image_view,
