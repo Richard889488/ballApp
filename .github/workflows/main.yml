@@ -16,7 +16,7 @@ jobs:
     - name: 安裝 Python 環境
       uses: actions/setup-python@v4
       with:
-        python-version: "3.10"
+        python-version: "3.10"  # 確保使用兼容的 Python 版本
 
     - name: 安裝構建工具
       run: |
