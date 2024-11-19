@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -51,10 +51,13 @@ jobs:
           pytest
         # 如果没有测试，可以注释掉或删除此步骤
 
-      # 7. 部署到 Heroku
-      - name: Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.12
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: "your-heroku-app-name"  # 替换为您的 Heroku 应用名称
-          heroku_email: "your-email@example.com"    # 替换为您的 Heroku 账户邮箱
+      # 7. 部署到 Render.com
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"serviceId":"your-render-service-id"}' \
+            https://api.render.com/v1/services/your-render-service-id/deploys
