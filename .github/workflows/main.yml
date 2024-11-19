@@ -44,8 +44,7 @@ jobs:
     # Step 6: 打包 APK
     - name: 打包 APK
       run: |
-        flet build apk  --name "com.example.myapp" --version "1.0.0" > build_log.txt 2>&1
-      continue-on-error: true
+        flet build apk  
 
     # Step 7: 上傳構建日誌
     - name: 上傳日誌
