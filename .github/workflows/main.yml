@@ -52,14 +52,13 @@ jobs:
       # Step 7: 獲取 Flutter 依賴
       - name: 獲取 Flutter 依賴
         run: flutter pub get
-        # 如果你的 Flutter 專案在子目錄，請設置正確的工作目錄
-        # working-directory: ./path/to/flutter/project
+        working-directory: ./ # 根據你的專案結構調整路徑
 
       # Step 8: 打包 APK 並記錄日誌
       - name: 打包 APK
         run: |
           flet build apk --name "com.example.myapp" --version "1.0.0" > build_log.txt 2>&1
-        continue-on-error: true  # 即使失敗也繼續後續步驟
+        continue-on-error: true # 即使失敗也繼續後續步驟
 
       # Step 9: 上傳構建日誌
       - name: 上傳構建日誌
