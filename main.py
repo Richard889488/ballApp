@@ -78,10 +78,17 @@ def stop_camera():
 def main(page: ft.Page):
     page.title = "Ball Face Detection App"
 
-    # 請求相機和藍牙權限
-    page.eval_js(
-        """
-        (function() {
+    # HTML 用於請求相機和藍牙權限
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="zh-Hant">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>請求相機和藍牙權限</title>
+    </head>
+    <body>
+        <script>
             // 請求相機權限
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(function(stream) {
@@ -99,9 +106,13 @@ def main(page: ft.Page):
                 .catch(function(error) {
                     console.error('藍牙連接失敗：', error);
                 });
-        })();
-        """
-    )
+        </script>
+    </body>
+    </html>
+    """
+
+    # 在頁面中嵌入 HTML
+    web_view = ft.Html(content=html_content, width=0, height=0)
 
     # 初始顯示用的空白影像
     init_image = np.zeros((480, 640, 3), dtype=np.uint8) + 128
@@ -202,6 +213,7 @@ def main(page: ft.Page):
 
     # 主頁佈局
     page.add(
+        web_view,  # 嵌入的 HTML 用於請求權限
         device_address_input,
         connect_button,
         message_input,
