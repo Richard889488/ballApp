@@ -90,6 +90,23 @@ def connect_bluetooth(address):
         print(f"無法連接到藍牙設備: {e}")
         bluetooth_socket = None
 
+# 發送藍牙訊息
+def send_bluetooth_message(message):
+    global bluetooth_socket
+    if bluetooth_socket:
+        try:
+            bluetooth_socket.send(message.encode())
+            print(f"已發送訊息: {message}")
+        except Exception as e:
+            print(f"無法發送訊息: {e}")
+    else:
+        print("藍牙尚未連接")
+
+# 發送人臉 X 軸位置
+def send_face_x_position(x):
+    message = f"FACE_X:{x}"
+    send_bluetooth_message(message)
+
 # Flet 介面部分
 @app.route('/flet_ui')
 def flet_ui():
@@ -121,15 +138,42 @@ def flet_ui():
             page.snack_bar.open = True
             page.update()
 
+        # 發送訊息按鈕
+        def send_message_button_click(e):
+            message = "Hello from Flet!"
+            send_bluetooth_message(message)
+
+        # 開始追蹤人臉並發送 X 軸位置
+        def update_image_view():
+            global capture, is_running
+            while is_running:
+                try:
+                    # 從攝影機獲取當前幀
+                    ret, frame = capture.read()
+                    if not ret:
+                        continue
+
+                    # 灰階轉換與人臉檢測
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    faces = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml").detectMultiScale(gray, 1.3, 5)
+                    for (x, y, w, h) in faces:
+                        send_face_x_position(x)  # 發送人臉的 X 軸位置
+
+                    time.sleep(1 / 30)  # 每秒約 30 幀
+                except Exception as e:
+                    print(f"更新影像時發生錯誤: {e}")
+
         start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
         stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
         connect_bluetooth_button = ft.ElevatedButton("連接藍牙", on_click=connect_bluetooth_button_click)
+        send_message_button = ft.ElevatedButton("發送訊息", on_click=send_message_button_click)
 
         # 主頁佈局
         page.add(
             start_camera_button,
             stop_camera_button,
             connect_bluetooth_button,
+            send_message_button,
             video_frame  # 使用 iframe 顯示視頻流
         )
 
