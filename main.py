@@ -8,12 +8,12 @@ import os
 import time
 import base64
 from flask import Flask, Response
-from bluetooth import *
 
 # 建立 Flask 應用
 app = Flask(__name__)
 capture = None
 is_running = False
+bluetooth_socket = None
 
 # 轉換影像為 base64 格式
 def to_base64(image):
@@ -77,14 +77,14 @@ def stop_camera():
 
 # 藍牙連接
 def connect_bluetooth(address):
+    global bluetooth_socket
     try:
-        sock = BluetoothSocket(RFCOMM)
-        sock.connect((address, 1))  # 1 is the port number for RFCOMM
+        bluetooth_socket = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+        bluetooth_socket.connect((address, 1))  # 1 is the port number for RFCOMM
         print(f"成功連接到藍牙設備: {address}")
-        return sock
     except Exception as e:
         print(f"無法連接到藍牙設備: {e}")
-        return None
+        bluetooth_socket = None
 
 # Flet 介面部分
 def main(page: ft.Page):
@@ -92,26 +92,13 @@ def main(page: ft.Page):
 
     # 使用 ft.Text 作為提示信息，因為目前無法直接嵌入 HTML 來請求權限
     html_content = """
-    請確保您已授予本頁面攝像頭和藍牙的使用權限。
+    請確保您已授予本頁面攝像頭的使用權限。
     """
 
     web_view = ft.Text(value=html_content, width=640, height=100)
 
     # 顯示影像的區域
     image_view = ft.Image(width=640, height=480)
-
-    # 藍牙連接按鈕
-    def connect_bluetooth_button_click(e):
-        address = "00:14:03:05:59:02"  # Example Bluetooth address, change it accordingly
-        sock = connect_bluetooth(address)
-        if sock:
-            page.snack_bar = ft.SnackBar(ft.Text("已成功連接到藍牙設備"))
-        else:
-            page.snack_bar = ft.SnackBar(ft.Text("藍牙連接失敗"))
-        page.snack_bar.open = True
-        page.update()
-
-    connect_bluetooth_button = ft.ElevatedButton("連接藍牙", on_click=connect_bluetooth_button_click)
 
     # 開始攝影機按鈕
     def start_camera_button_click(e):
@@ -125,8 +112,20 @@ def main(page: ft.Page):
         stop_camera()
         page.update()
 
+    # 藍牙連接按鈕
+    def connect_bluetooth_button_click(e):
+        address = "00:14:03:05:59:02"  # Example Bluetooth address, change it accordingly
+        connect_bluetooth(address)
+        if bluetooth_socket:
+            page.snack_bar = ft.SnackBar(ft.Text("已成功連接到藍牙設備"))
+        else:
+            page.snack_bar = ft.SnackBar(ft.Text("藍牙連接失敗"))
+        page.snack_bar.open = True
+        page.update()
+
     start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
+    connect_bluetooth_button = ft.ElevatedButton("連接藍牙", on_click=connect_bluetooth_button_click)
 
     # 更新影像視圖
     def update_image_view():
@@ -147,9 +146,9 @@ def main(page: ft.Page):
 
     # 主頁佈局
     page.add(
-        connect_bluetooth_button,
         start_camera_button,
         stop_camera_button,
+        connect_bluetooth_button,
         image_view,
         web_view,  # 顯示提示信息
     )
