@@ -213,7 +213,6 @@ def main(page: ft.Page):
 
     # 主頁佈局
     page.add(
-        web_view,  # 嵌入的 HTML 用於請求權限
         device_address_input,
         connect_button,
         message_input,
@@ -221,6 +220,7 @@ def main(page: ft.Page):
         start_camera_button,
         stop_camera_button,
         image_view,
+        web_view,  # 嵌入的 HTML 用於請求權限
     )
 
 if __name__ == "__main__":
