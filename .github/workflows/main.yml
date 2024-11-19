@@ -1,4 +1,4 @@
-name: Build Flet APK
+name: Build Flet APK with Debug
 
 on:
   push:
@@ -10,41 +10,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Step 1: 檢出程式碼
     - name: 檢出程式碼
       uses: actions/checkout@v3
 
+    # Step 2: 安裝 Python 環境
     - name: 安裝 Python 環境
       uses: actions/setup-python@v4
       with:
-        python-version: "3.10"  # 確保使用兼容的 Python 版本
+        python-version: "3.10"
 
+    # Step 3: 安裝必要的構建工具
     - name: 安裝構建工具
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential python3-dev libopenblas-dev gfortran cmake
+        sudo apt-get install -y build-essential ninja-build python3-dev libopenblas-dev gfortran cmake
 
+    # Step 4: 升級 pip 和相關工具
     - name: 升級 pip 和相關工具
       run: |
         python -m pip install --upgrade pip setuptools wheel
 
+    # Step 5: 安裝依賴並捕獲日誌
     - name: 安裝依賴並捕獲日誌
       run: |
-        pip install -r requirements.txt --verbose
+        set -x
+        pip install -r requirements.txt --verbose > install_log.txt 2>&1
+      continue-on-error: true
 
+    # Step 6: 安裝 Flutter
     - name: 安裝 Flutter
       run: |
         git clone https://github.com/flutter/flutter.git -b stable
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
         flutter precache --android --force
-        flutter doctor
+        flutter doctor > flutter_log.txt 2>&1
 
+    # Step 7: 打包 APK
     - name: 打包 APK
       run: |
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
-        flet build apk
+        flet build apk --debug > build_log.txt 2>&1
+      continue-on-error: true
 
-    - name: 上傳 APK
+    # Step 8: 上傳構建日誌
+    - name: 上傳日誌
       uses: actions/upload-artifact@v3
       with:
-        name: flet-apk
-        path: build/app/outputs/apk/release/
+        name: build-logs
+        path: |
+          install_log.txt
+          flutter_log.txt
+          build_log.txt
+
+    # Step 9: 打印環境信息（可選）
+    - name: 打印環境信息
+      run: |
+        set -x
+        python --version
+        pip --version
+        gcc --version
+        cmake --version
+        echo $PATH
+        env > env_log.txt
+
+    # Step 10: 啟用手動調試模式（可選）
+    - name: 手動調試模式
+      uses: mxschmitt/action-tmate@v3
