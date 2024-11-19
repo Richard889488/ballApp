@@ -21,7 +21,7 @@ jobs:
     - name: 安裝 Flutter
       run: |
         git clone https://github.com/flutter/flutter.git -b stable
-        echo "${{ github.workspace }}/flutter/bin" >> $GITHUB_PATH
+        export PATH="$PATH:${{ github.workspace }}/flutter/bin"
         flutter --version
 
     - name: 安裝必要套件
@@ -31,6 +31,7 @@ jobs:
 
     - name: 打包 APK
       run: |
+        export PATH="$PATH:${{ github.workspace }}/flutter/bin"
         flet build apk
 
     - name: 上傳 APK 為 Artifacts
