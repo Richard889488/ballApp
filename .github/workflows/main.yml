@@ -16,45 +16,27 @@ jobs:
     - name: 安裝 Python 環境
       uses: actions/setup-python@v4
       with:
-        python-version: "3.10"
+        python-version: "3.10"  # Python 3.10 是兼容的版本
 
-    - name: 安裝 Android 開發工具
+    - name: 安裝依賴
       run: |
-        sudo apt-get update
-        sudo apt-get install -y openjdk-11-jdk wget unzip
-        mkdir -p $HOME/android-sdk/cmdline-tools
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip -O cmdline-tools.zip
-        unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
-        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-        export ANDROID_SDK_ROOT=$HOME/android-sdk
-        export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-        yes | sdkmanager --licenses
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+        python -m pip install --upgrade pip  # 升級 pip
+        pip install -r requirements.txt     # 安裝所有必要套件
 
     - name: 安裝 Flutter
       run: |
         git clone https://github.com/flutter/flutter.git -b stable
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
-        flutter precache --android --force
+        flutter precache --android --force  # 確保 Flutter SDK 下載完整
         flutter doctor
-
-    - name: 安裝必要套件
-      run: |
-        python -m pip install --upgrade pip
-        pip install pip-tools
-        mv requirements.txt requirements.in
-        pip-compile requirements.in
-        pip install -r requirements.txt
 
     - name: 打包 APK
       run: |
         export PATH="$PATH:${{ github.workspace }}/flutter/bin"
-        export ANDROID_SDK_ROOT=$HOME/android-sdk
-        export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools
-        flet build apk
+        flet build apk                      # 使用 Flet 打包 APK
 
-    - name: 上傳 APK 為 Artifacts
+    - name: 上傳 APK
       uses: actions/upload-artifact@v3
       with:
         name: flet-apk
-        path: build/app/outputs/apk/release/
+        path: build/app/outputs/apk/release/  # 請根據實際輸出路徑修改
