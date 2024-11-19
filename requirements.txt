@@ -1,4 +1,4 @@
 flet==0.22.*
-opencv-python
 numpy==1.21.0
+opencv-python
 flask
