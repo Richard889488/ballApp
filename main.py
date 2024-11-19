@@ -91,46 +91,53 @@ def connect_bluetooth(address):
         bluetooth_socket = None
 
 # Flet 介面部分
-def main(page: ft.Page):
-    page.title = "Ball Face Detection App"
+@app.route('/flet_ui')
+def flet_ui():
+    def main(page: ft.Page):
+        page.title = "Ball Face Detection App"
 
-    # 使用 HTML 嵌入 Flask 提供的視頻流
-    video_frame = ft.Container(content=ft.HtmlElement("<iframe src='http://127.0.0.1:5000/video_feed' width='640' height='480' frameborder='0'></iframe>"), expand=True)
+        # 使用 HTML 嵌入 Flask 提供的視頻流
+        video_frame = ft.Container(content=ft.IFrame(src="/video_feed", width=640, height=480), expand=True)
 
-    # 開始攝影機按鈕
-    def start_camera_button_click(e):
-        start_camera()
-        threading.Thread(target=update_image_view, daemon=True).start()
-        page.update()
+        # 開始攝影機按鈕
+        def start_camera_button_click(e):
+            start_camera()
+            threading.Thread(target=update_image_view, daemon=True).start()
+            page.update()
 
-    # 停止攝影機按鈕
-    def stop_camera_button_click(e):
-        stop_camera()
-        page.update()
+        # 停止攝影機按鈕
+        def stop_camera_button_click(e):
+            stop_camera()
+            page.update()
 
-    # 藍牙連接按鈕
-    def connect_bluetooth_button_click(e):
-        address = "00:14:03:05:59:02"  # Example Bluetooth address, change it accordingly
-        connect_bluetooth(address)
-        if bluetooth_socket:
-            page.snack_bar = ft.SnackBar(ft.Text("已成功連接到藍牙設備"))
-        else:
-            page.snack_bar = ft.SnackBar(ft.Text("藍牙連接失敗"))
-        page.snack_bar.open = True
-        page.update()
+        # 藍牙連接按鈕
+        def connect_bluetooth_button_click(e):
+            address = "00:14:03:05:59:02"  # Example Bluetooth address, change it accordingly
+            connect_bluetooth(address)
+            if bluetooth_socket:
+                page.snack_bar = ft.SnackBar(ft.Text("已成功連接到藍牙設備"))
+            else:
+                page.snack_bar = ft.SnackBar(ft.Text("藍牙連接失敗"))
+            page.snack_bar.open = True
+            page.update()
 
-    start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
-    stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
-    connect_bluetooth_button = ft.ElevatedButton("連接藍牙", on_click=connect_bluetooth_button_click)
+        start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
+        stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
+        connect_bluetooth_button = ft.ElevatedButton("連接藍牙", on_click=connect_bluetooth_button_click)
 
-    # 主頁佈局
-    page.add(
-        start_camera_button,
-        stop_camera_button,
-        connect_bluetooth_button,
-        video_frame  # 使用 iframe 顯示視頻流
-    )
+        # 主頁佈局
+        page.add(
+            start_camera_button,
+            stop_camera_button,
+            connect_bluetooth_button,
+            video_frame  # 使用 iframe 顯示視頻流
+        )
+
+    ft.app(target=main, view=ft.WEB_BROWSER)
+    return "Flet UI started"
 
 if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
-    ft.app(target=main, view=ft.WEB_BROWSER)
+    threading.Thread(target=flet_ui, daemon=True).start()
+    while True:
+        time.sleep(1)
