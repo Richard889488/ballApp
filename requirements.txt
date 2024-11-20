@@ -2,3 +2,4 @@ flet==0.22.*
 numpy
 opencv-python
 flask
+mediapipe
