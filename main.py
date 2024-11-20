@@ -8,7 +8,6 @@ import os
 import time
 import base64
 from flask import Flask, Response, render_template
-import asyncio
 
 # 建立 Flask 應用
 app = Flask(__name__)
@@ -120,39 +119,18 @@ async def main(page: ft.Page):
         page.snack_bar.open = True
         page.update()
 
-    # 添加請求權限的 HTML
-    permission_html = """
-    <script>
-        async function requestPermissions() {
-            try {
-                // 請求相機權限
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                console.log('相機已啟動');
-                stream.getTracks().forEach(track => track.stop());
-
-                // 請求藍牙權限
-                const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
-                console.log('已連接到藍牙設備：', device.name);
-            } catch (err) {
-                console.error('權限請求失敗：', err);
-            }
-        }
-        requestPermissions();
-    </script>
-    """
-
-    # 使用 HtmlElement 顯示權限請求的腳本
-    permission_element = ft.HtmlElement(content=permission_html, width=0, height=0)
+    # 添加視頻流的 iframe
+    video_frame = ft.IFrame(src="http://127.0.0.1:5000/video_feed", width=640, height=480)
 
     start_camera_button = ft.ElevatedButton("開始攝影機", on_click=start_camera_button_click)
     stop_camera_button = ft.ElevatedButton("停止攝影機", on_click=stop_camera_button_click)
     connect_bluetooth_button = ft.ElevatedButton("連接藍牙", on_click=connect_bluetooth_button_click)
 
     # 主頁佈局
-    page.overlay.append(permission_element)
     page.add(
         ft.Column(
             [
+                video_frame,
                 start_camera_button,
                 stop_camera_button,
                 connect_bluetooth_button,
