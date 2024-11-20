@@ -8,6 +8,7 @@ import os
 import time
 import base64
 from flask import Flask, Response, render_template
+import asyncio
 
 # 建立 Flask 應用
 app = Flask(__name__)
@@ -91,7 +92,7 @@ def connect_bluetooth(address):
         bluetooth_socket = None
 
 # Flet 介面部分
-def main(page: ft.Page):
+async def main(page: ft.Page):
     page.title = "Ball Face Detection App"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -166,6 +167,4 @@ if __name__ == "__main__":
     # 啟動 Flask 伺服器和 Flet UI
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
-    flet_thread = threading.Thread(target=lambda: ft.app(target=main, view=ft.WEB_BROWSER, host='0.0.0.0'), daemon=True)
-    flet_thread.start()
-    flet_thread.join()
+    ft.app(target=main, view=ft.WEB_BROWSER, host='0.0.0.0')
